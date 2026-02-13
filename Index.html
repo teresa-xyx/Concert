@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特别的问题</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 烟花画布 */
+        #fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 40px;
+        }
+
+        .button-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+
+        button {
+            padding: 15px 50px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            position: absolute;
+        }
+
+        #yesBtn {
+            background: #4CAF50;
+            color: white;
+            left: 50%;
+            top: 20px;
+            transform: translateX(-50%);
+        }
+
+        #yesBtn:hover {
+            background: #45a049;
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        #noBtn {
+            background: #f44336;
+            color: white;
+            left: 50%;
+            top: 100px;
+            transform: translateX(-50%);
+            transition: all 0.2s ease;
+        }
+
+        .success-screen {
+            display: none;
+        }
+
+        .success-screen h1 {
+            color: #4CAF50;
+            font-size: 2.5em;
+        }
+
+        .success-screen p {
+            font-size: 1.3em;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        .heart {
+            font-size: 3em;
+            margin: 20px 0;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* 生气emoji样式 */
+        .angry-emoji {
+            position: fixed;
+            font-size: 3em;
+            pointer-events: none;
+            z-index: 5;
+            animation: flash 0.8s ease-in-out forwards;
+        }
+
+        @keyframes flash {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 烟花画布 -->
+    <canvas id="fireworks"></canvas>
+
+    <div class="container">
+        <div id="questionScreen">
+            <h1>你想要请我看EXO演唱会吗?</h1>
+            <div class="button-container">
+                <button id="yesBtn">Yes! 💕</button>
+                <button id="noBtn">No</button>
+            </div>
+        </div>
+
+        <div id="successScreen" class="success-screen">
+            <!-- EXO 图片 -->
+            <div class="exo-gif">
+                <img src="https://media1.tenor.com/m/tEbSBnkA2hQAAAAd/exo-chanyeol.gif" alt="EXO" style="max-width: 80%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+            </div>
+            
+            <h1>太好了!</h1>
+            <p>我就知道你会答应的 😊</p>
+        </div>
+    </div>
+
+    <script>
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const questionScreen = document.getElementById('questionScreen');
+        const successScreen = document.getElementById('successScreen');
+        const buttonContainer = document.querySelector('.button-container');
+
+        let isYesClicked = false; // 追踪是否点击了Yes
+
+        // 当鼠标移动到 No 按钮上时,按钮快速移动位置
+        noBtn.addEventListener('mouseenter', () => {
+            if (!isYesClicked) { // 只有在没点Yes的情况下才生成emoji
+                moveNoButton();
+            }
+        });
+
+        // 也可以监听触摸事件(移动端)
+        noBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!isYesClicked) {
+                moveNoButton();
+            }
+        });
+
+        // 点击 Yes 按钮
+        yesBtn.addEventListener('click', () => {
+            isYesClicked = true; // 标记已点击Yes
+            questionScreen.style.display = 'none';
+            successScreen.style.display = 'block';
+            // 成功时增加烟花效果
+            increaseFireworks();
+        });
+
+        function moveNoButton() {
+            const containerRect = buttonContainer.getBoundingClientRect();
+            const btnRect = noBtn.getBoundingClientRect();
+            
+            // 生成随机位置
+            const maxX = containerRect.width - btnRect.width;
+            const maxY = containerRect.height - btnRect.height;
+            
+            const randomX = Math.random() * maxX;
+            const randomY = Math.random() * maxY;
+            
+            noBtn.style.left = randomX + 'px';
+            noBtn.style.top = randomY + 'px';
+            noBtn.style.transform = 'none';
+
+            // 生成生气emoji
+            createAngryEmojis();
+        }
+
+        // 生成生气emoji闪现效果
+        function createAngryEmojis() {
+            const emojis = ['😠', '😡', '🤬', '💢', '😤'];
+            const emojiCount = 20; // 每次生成20个emoji
+
+            for (let i = 0; i < emojiCount; i++) {
+                const emoji = document.createElement('div');
+                emoji.className = 'angry-emoji';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                
+                // 随机位置分布在整个屏幕
+                emoji.style.left = Math.random() * 100 + '%';
+                emoji.style.top = Math.random() * 100 + '%';
+                
+                document.body.appendChild(emoji);
+
+                // 0.8秒后移除emoji元素（与动画时长一致）
+                setTimeout(() => {
+                    emoji.remove();
+                }, 800);
+            }
+        }
+
+        // ===== 烟花效果代码 =====
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 8,
+                    y: (Math.random() - 0.5) * 8
+                };
+                this.alpha = 1;
+                this.decay = Math.random() * 0.015 + 0.015;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            update() {
+                this.velocity.y += 0.1;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= this.decay;
+            }
+        }
+
+        let particles = [];
+        let fireworkInterval = 1000; // 每1秒一次烟花（频率翻倍）
+
+        function createFirework() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height * 0.5;
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((particle, index) => {
+                if (particle.alpha <= 0) {
+                    particles.splice(index, 1);
+                } else {
+                    particle.update();
+                    particle.draw();
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // 定期创建烟花
+        setInterval(createFirework, fireworkInterval);
+
+        // 开始动画
+        animate();
+
+        // 点击Yes后增加烟花频率
+        function increaseFireworks() {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(createFirework, i * 200);
+            }
+        }
+    </script>
+</body>
+</html>
